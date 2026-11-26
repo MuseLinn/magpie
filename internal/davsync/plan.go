@@ -138,6 +138,19 @@ func preview(ctx context.Context, c Config, st state) (Plan, error) {
 	if err := syncOnce(ctx, c, &st, &p); err != nil {
 		return Plan{}, err
 	}
+	if p.Parts == nil {
+		// nothing changed on either side, so syncOnce returned before
+		// previewed: a preview still says what each part is, and a plan
+		// without parts reaches the GUI as null
+		p.Parts = make([]PartPlan, 0, len(Parts))
+		for _, part := range Parts {
+			do := "same"
+			if !c.syncs(part) {
+				do = "off"
+			}
+			p.Parts = append(p.Parts, PartPlan{Part: part, Do: do})
+		}
+	}
 	p.Follow = c.FollowServer
 	p.Token = ""
 	j, _ := json.Marshal(p)

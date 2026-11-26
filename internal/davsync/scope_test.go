@@ -245,6 +245,30 @@ func TestPreviewThenSync(t *testing.T) {
 	}
 }
 
+// A preview with nothing to do still says what every part is: the
+// Settings preview lists them, and a plan with no parts reads as null
+// there.
+func TestPreviewWithNothingToDo(t *testing.T) {
+	_, cfg := scopeServer(t)
+	a := newComputer(t)
+	a.use(t)
+	provider.Save(provider.Provider{ID: "pa", Name: "A", Chat: "https://a/v1", Key: "ka"})
+	Configure(cfg)
+	syncOK(t)
+	p, err := Preview(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(p.Parts) != len(Parts) {
+		t.Fatalf("a preview with nothing to do: %d parts, want %d: %+v", len(p.Parts), len(Parts), p.Parts)
+	}
+	for _, pp := range p.Parts {
+		if pp.Do != "same" {
+			t.Fatalf("%s: %+v", pp.Part, pp)
+		}
+	}
+}
+
 // UndoSync puts back what the last sync brought in, on this computer
 // only; a part changed here since is written over only when asked.
 func TestUndoSync(t *testing.T) {
